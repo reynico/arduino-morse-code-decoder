@@ -84,13 +84,13 @@
 
 // zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 // ********************************** LCD library and setup *********************************
-/*
+
 // I2C LCD libraries and setup
 #include <Wire.h>                       // Wire for I2C communication to the LCD
 #include <LiquidCrystal_I2C.h>          // LCD I2C library for LCD functions
-const byte I2C_ADDR = 0x3F;             // Hexadecimal address of the LCD unit
+const byte I2C_ADDR = 0x27;             // Hexadecimal address of the LCD unit
 LiquidCrystal_I2C lcd(I2C_ADDR, 20, 4); // Set the LCD address to 0x27 for a 20 chars and 4 line display
-*/
+
 
 /*
 // LCD without I2C, using LiquidCrystal library
@@ -101,7 +101,7 @@ const byte LCD_ROWS = 4;
 const byte rs = 7, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 */
-
+/*
 // LCD without I2C using HD44780 library
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_pinIO.h> // Arduino pin i/o class header
@@ -109,12 +109,14 @@ const byte LCD_COLS = 20;
 const byte LCD_ROWS = 4;
 const int rs = 7, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8;
 hd44780_pinIO lcd(rs, en, d4, d5, d6, d7);
+*/
 // zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
 const byte INPUT_PIN = 2;       // The morse input pin (D2 on Nano)
 const byte SPEED_POT_PIN = A3;  // The analog pin for the speed pot (A3 on Nano)
 const byte STATUS_LED_PIN = 5;  // The LED receive status pin (D5 on Nano)
 const byte AUTO_MODE_PIN = 6;   // Pin for auto/manual speed switch (D6 on Nano)
+const byte CLEAR_SCREEN_PIN = 3; // Pin to clear the messages from the screen (D3 on Nano)
 
 // Define Morse characters
 String morsePlain[] = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",
@@ -252,6 +254,7 @@ bool spaceFlag = 0;                           // A flag to control when to print
 String completeLineText = "";                 // All text in the first scrolling line
 int lastCharLoc = 0;                          // The location of the last character on the scrolling line
 byte morseDisplayBuffer[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // Array of dots, dashes and spaces for storing scrolling morse display
+bool clearDisplayFlag = 0;
 
 // Track mode (manual/auto)
 bool currentMode;                             // The current mode setting. 0 = Manual, 1 = Auto
@@ -264,10 +267,11 @@ bool lastMode;                                // The mode when last checked
 void setup() {
 
   // Map input and output pins
-  pinMode(INPUT_PIN, INPUT);            // Set pin as input for the morse input pin
-  pinMode(STATUS_LED_PIN, OUTPUT);      // Set pin as output for the status LED
-  pinMode(SPEED_POT_PIN, INPUT);        // Set pin as input for the analog speed pot
-  pinMode(AUTO_MODE_PIN, INPUT_PULLUP); // Set pin as input for the auto/manual mode switch
+  pinMode(INPUT_PIN, INPUT_PULLUP);        // Set pin as input for the morse input pin
+  pinMode(STATUS_LED_PIN, OUTPUT);         // Set pin as output for the status LED
+  pinMode(SPEED_POT_PIN, INPUT);           // Set pin as input for the analog speed pot
+  pinMode(AUTO_MODE_PIN, INPUT_PULLUP);    // Set pin as input for the auto/manual mode switch
+  pinMode(CLEAR_SCREEN_PIN, INPUT_PULLUP); // Set pin as input for screen clearing
 
   lastMode = digitalRead(AUTO_MODE_PIN); // Set the mode;
   
@@ -284,7 +288,7 @@ void setup() {
   // lcd.backlight();    // Use with I2C backpack 
 
   // For LiquidCrystal and HD44780 libraries without a backpack
-  lcd.begin(LCD_COLS, LCD_ROWS);   // Use when not using a backpack
+  lcd.begin();   // Use when not using a backpack
   // zzzzzzzzzzzzzzzzzzzzzzzzzzzzz End of LCD initialisation zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
   // Create custom LCD characters (.- and space) for morse
@@ -317,7 +321,7 @@ void loop() {
   if (currentMode == 0) {         // if auto mode is off
 
     // Get the value and map it to a useful range 20 - 150
-    dotDuration = map(analogRead(SPEED_POT_PIN), 0, 1023, 20, 150);  
+    dotDuration = map(analogRead(SPEED_POT_PIN), 0, 1023, 20, 250);  
 
     // If the speed has changed update timing values
     if (dotDuration != lastDotDuration) { 
@@ -334,6 +338,14 @@ void loop() {
     endOfCharacter();             // If enough time has elapsed to end a character and there is something in the buffer, convert and display it
     endOfWord();                  // Print a space if enough time has elapsed and one has not already been printed
   }
+
+  int clearDisplayButton = digitalRead(CLEAR_SCREEN_PIN);
+  if (clearDisplayButton == LOW && clearDisplayFlag) {
+    lcd.clear();
+  }
+
+  clearDisplayFlag = clearDisplayButton;
+
 }
 
 // ===========================================================================================
@@ -553,7 +565,7 @@ void displaySetSpeed(int dotLength) {
     lcd.print(F("Auto: "));
   } 
   else {
-    lcd.print(F("Man:  "));
+    lcd.print(F("Manu: "));
   }
   
   lcd.setCursor(11, 0);
@@ -563,6 +575,7 @@ void displaySetSpeed(int dotLength) {
   lcd.print(" ");                     // A blank space at the end to clear old bits
 
 }
+
 
 // -------------------------------------------------------------------------------------------
 //                                     Display actual speed
