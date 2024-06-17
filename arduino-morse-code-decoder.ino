@@ -395,7 +395,7 @@ void validationCheck() {
   // Check if stuck in a high input
   if (stateNow == 1 && (millis() - lastInterruptTime) > maxDashDuration) {
     stateNow = 0; // Reset state
-    digitalWrite(STATUS_LED_PIN, LOW);    // turn the LED off
+    noTone(STATUS_LED_PIN);
     // This could be improved. These are some limitations:
     //  - There is no further processing. It's not stored as a dash, just ignored
     //  - The next ISR call could be affected and this is not being dealt with
@@ -695,11 +695,11 @@ void morse_ISR() {
          
       newDataFlag = 1;                    // Flag there is a new mark to process
       stateNow = 0;                       // Set current state to nothing being currently sent
-      digitalWrite(STATUS_LED_PIN, LOW);  // turn the LED off     
+      noTone(STATUS_LED_PIN);
     }
     else { // We are just starting a dot/dash
       stateNow = 1; // Set current state to currently recieving a mark
-      digitalWrite(STATUS_LED_PIN, HIGH); // turn the LED on
+      tone(STATUS_LED_PIN, 1000);
     }
     //lastInterruptTime = interruptTime;    // Remember interrupt time for next time ******** Seems to work better with inteference here ********
   }
