@@ -119,10 +119,13 @@ const int AUTO_MODE_THRESHOLD = 1000;  // If analogRead of SPEED_POT_PIN is belo
 const byte CLEAR_SCREEN_PIN = 3;       // Pin to clear the messages from the screen (D3 on Nano)
 
 // Define Morse characters
-String morsePlain[] = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
-                        "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-                        "'", "\"", "@", ")", ":", ";", ",", "!", ".", "-", "?", "$", "/", "_", "<AA>", "<AR/+>",
-                        "<AS/&>", "<BK>", "<BT/=>", "<CL>", "<CT>", "<DO>", "<HH>", "<KN/(>", "<SK>", "<SN>", "<SOS>" };
+const char* morsePlain[] = {
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
+  "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+  "'", "\"", "@", ")", ":", ";", ",", "!", ".", "-", "?", "$", "/", "_", "<AA>", "<AR/+>",
+  "<AS/&>", "<BK>", "<BT/=>", "<CL>", "<CT>", "<DO>", "<HH>", "<KN/(>", "<SK>", "<SN>", "<SOS>"
+};
+
 
 byte morseCode[][9] = {
   //  1 = dot, 2 = dash, 0 = not used
@@ -355,6 +358,17 @@ void loop() {
   int clearDisplayButton = digitalRead(CLEAR_SCREEN_PIN);
   if (clearDisplayButton == LOW && clearDisplayFlag) {
     lcd.clear();
+    completeLineText = "";
+    lastCharLoc = 0;
+    int speed = analogRead(SPEED_POT_PIN);
+    lcd.setCursor(0, 0);
+    if (speed > AUTO_MODE_THRESHOLD) {
+      currentMode = 1;
+      lcd.print(F("Auto: "));
+    } else {
+      currentMode = 0;
+      lcd.print(F("Manu: "));
+    }
   }
 
   clearDisplayFlag = clearDisplayButton;
